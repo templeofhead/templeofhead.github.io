@@ -1,117 +1,612 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>EBALI - Software Development Methodology</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Guide to Salem Farming</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Parchment -->
+    <!-- Application Structure Plan: A task-oriented, non-linear Single Page Application. It features a top navigation bar for quick access to four distinct sections: 1. "Fundamentals" uses an accordion UI for beginners to learn setup and basic concepts without clutter. 2. The core is the "Influence Simulator," an interactive dashboard with a Chart.js radar chart and controls, allowing users to learn the complex influence system by doing. 3. The "Rotation Planner" is a goal-oriented tool that takes a user's desired crop and generates a simple, visual step-by-step guide. 4. A "Quick Reference" section provides filterable tables for experienced players needing quick data lookups. This structure was chosen to cater to different user needs and learning styles, transforming a dense text report into an engaging and useful tool. -->
+    <!-- Visualization & Content Choices: 1. Influence System: Report Info -> 4 influence bars, crop interactions. Goal -> Explain this dynamic system. Viz -> Chart.js Radar Chart. Interaction -> User selects crop/fertilizer, clicks "Harvest" to see the chart animate and values update. Justification -> A dynamic, interactive model is superior to static text for explaining a complex, interconnected system. 2. Crop Rotations: Report Info -> Tables of rotation sequences. Goal -> Provide clear, actionable plans. Viz -> Dynamically generated HTML/CSS flowchart. Interaction -> User selects a goal, the plan appears. Justification -> A visual flow is much easier to follow than a table. 3. Data Tables (Crops, Fertilizers, Tiers): Report Info -> Various data points. Goal -> Provide quick reference. Viz -> Filterable HTML tables. Interaction -> Text search. Justification -> Efficient for structured data lookup for power users. Library/Method -> Chart.js for the radar chart, vanilla JS and Tailwind for all other components. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-            color: #333;
+            background-color: #FDFBF5;
+            color: #4E443A;
+            font-family: 'Georgia', serif;
         }
-        header {
-            background-color: #2c3e50;
-            color: white;
-            padding: 2rem;
-            text-align: center;
-        }
-        main {
-            max-width: 900px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-        h1, h2 {
-            color: #2c3e50;
-        }
-        ul {
-            margin-bottom: 1.5rem;
-        }
-        pre {
-            background-color: #f4f4f4;
+        .accent-bg { background-color: #C67B5C; }
+        .accent-text { color: #C67B5C; }
+        .accent-border { border-color: #C67B5C; }
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 1rem;
-            overflow-x: auto;
         }
-        code {
-            font-family: monospace;
+        .card {
+            background-color: #F5F0E6;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            border: 1px solid #EAE0D1;
         }
-        footer {
+        .nav-link {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: #EAE0D1;
+            color: #4E443A;
+        }
+        .btn {
+            background-color: #C67B5C;
+            color: #FDFBF5;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: background-color 0.2s;
             text-align: center;
-            padding: 2rem;
-            font-size: 0.9rem;
-            color: #777;
+        }
+        .btn:hover {
+            background-color: #B56A4B;
+        }
+        .btn-secondary {
+            background-color: #A08C7D;
+        }
+        .btn-secondary:hover {
+            background-color: #8A7667;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: auto;
+            min-height: 300px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                min-height: 400px;
+            }
+        }
+        .influence-bar {
+            height: 10px;
+            border-radius: 5px;
+            transition: width 0.5s ease-in-out;
         }
     </style>
 </head>
-<body>
-    <header>
-        <h1>EBALI</h1>
-        <p><strong>E</strong>fficient • <strong>B</strong>alanced • <strong>A</strong>daptive • <strong>L</strong>earning-Driven • <strong>I</strong>nclusive</p>
+<body class="antialiased">
+
+    <header class="sticky top-0 bg-white/80 backdrop-blur-md z-10 shadow-sm">
+        <div class="main-container flex items-center justify-between py-4">
+            <h1 class="text-2xl font-bold accent-text">Salem Farming Guide</h1>
+            <nav class="hidden md:flex items-center space-x-2">
+                <a href="#fundamentals" class="nav-link">Fundamentals</a>
+                <a href="#simulator" class="nav-link">Simulator</a>
+                <a href="#rotations" class="nav-link">Rotations</a>
+                <a href="#reference" class="nav-link">Reference</a>
+            </nav>
+        </div>
     </header>
 
-    <main>
-        <h2>What is EBALI?</h2>
-        <p>EBALI is a modern, team-oriented software development methodology emphasizing collaboration, clarity, adaptability, and continuous learning. It focuses on building maintainable systems with sustainable growth.</p>
+    <main class="main-container mt-8">
+        
+        <section id="fundamentals" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-2 text-center">Farming Fundamentals</h2>
+            <p class="text-center mb-8 max-w-3xl mx-auto text-lg text-gray-600">New to farming in Salem? Start here. This section covers the essential knowledge to set up your first farm, understand core mechanics, and learn the critical skills for success.</p>
+            <div class="space-y-4 max-w-4xl mx-auto">
+                <div class="accordion-item card">
+                    <button class="accordion-header w-full flex justify-between items-center text-left text-xl font-semibold">
+                        <span>First Field Setup: A 5-Step Guide</span>
+                        <span class="transform transition-transform duration-300">▼</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="pt-4 text-gray-700 space-y-3">
+                            <p><strong>1. Claim Your Land:</strong> Use a Claimstone (requires "Settling" skill) to protect your fields from other players. Location near shallow water and a Clay Pit is ideal.</p>
+                            <p><strong>2. Till the Land:</strong> Construct a 4x4 Tilled Field on flat ground. Using a Wooden Hoe reduces construction time and cost.</p>
+                            <p><strong>3. Beat the Crows:</strong> Build a Scarecrow or, more effectively, pave an area and build a fence around your fields to prevent crows from spiking your upkeep to 600%.</p>
+                            <p><strong>4. Get Humus & Seeds:</strong> Generate Humus in a Compost Bin. For your first planting, purchase Cotton seeds from Spuds McArtor in Providence.</p>
+                            <p><strong>5. Slash Upkeep:</strong> This is critical! On a new field, add Wood Choppings until upkeep drops from 100% to 50%. This permanently halves the Humus and seed cost for all future plantings on that field.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item card">
+                    <button class="accordion-header w-full flex justify-between items-center text-left text-xl font-semibold">
+                        <span>Essential Skills for Farmers</span>
+                        <span class="transform transition-transform duration-300">▼</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="pt-4 text-gray-700 space-y-2">
+                            <p><strong class="accent-text">Agriculture:</strong> The foundational skill. Unlocks Tilled Fields and allows you to plant Cereals. Requires "Colonial Tradesmanship", 200 "Herbs & Sprouts", and 640 "Stocks & Cultivars".</p>
+                            <p><strong class="accent-text">Three-field System:</strong> The most important skill for advanced farming. It boosts influence gain from 3x to 5x per harvest, dramatically accelerating your progress to high-tier crops.</p>
+                             <p><strong class="accent-text">Plantation Management:</strong> Allows you to use the "Tend" action to permanently lower the base upkeep of a field below the natural 50% cap.</p>
+                        </div>
+                    </div>
+                </div>
+                 <div class="accordion-item card">
+                    <button class="accordion-header w-full flex justify-between items-center text-left text-xl font-semibold">
+                        <span>Tilled Fields vs. Gardening Pots</span>
+                        <span class="transform transition-transform duration-300">▼</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="pt-4 grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="font-bold text-lg mb-2">Tilled Fields</h3>
+                                <ul class="list-disc list-inside space-y-1 text-gray-700">
+                                    <li>For large-scale farming of staple crops (Cereals, Cotton, etc.).</li>
+                                    <li>Complex mechanics: Upkeep, Fertilizers, and a 4-bar Influence system.</li>
+                                    <li>Goal is to manipulate influence to produce high-tier crops.</li>
+                                    <li>Requires significant setup and management.</li>
+                                </ul>
+                            </div>
+                             <div>
+                                <h3 class="font-bold text-lg mb-2">Gardening Pots</h3>
+                                <ul class="list-disc list-inside space-y-1 text-gray-700">
+                                    <li>For small-scale cultivation of foraged wild plants.</li>
+                                    <li>Simpler mechanics: Requires Humus and Water.</li>
+                                    <li>Reduces player Insanity.</li>
+                                    <li>Yield and Purity depend on Humus/Pot/Plant purity and "Herbs & Sprouts" skill.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <h2>Core Principles</h2>
+        <section id="simulator" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-2 text-center">The Influence System Simulator</h2>
+            <p class="text-center mb-8 max-w-3xl mx-auto text-lg text-gray-600">The heart of farming is the influence system. This tool lets you experiment with crops and fertilizers to see how they affect the four influence bars. Plan your harvests and master the path to high-tier crops.</p>
+            <div class="card">
+                <div class="grid lg:grid-cols-3 gap-8 items-start">
+                    <div class="lg:col-span-1 space-y-4">
+                        <h3 class="text-xl font-bold">Simulation Controls</h3>
+                        <div>
+                            <label for="sim-crop" class="font-semibold block mb-1">1. Choose Crop to Plant:</label>
+                            <select id="sim-crop" class="w-full p-2 border rounded-md bg-white"></select>
+                        </div>
+                        <div>
+                            <label for="sim-fertilizer" class="font-semibold block mb-1">2. Add Fertilizer (Optional):</label>
+                            <select id="sim-fertilizer" class="w-full p-2 border rounded-md bg-white"></select>
+                        </div>
+                        <div>
+                            <label class="font-semibold block mb-1">3. Skills:</label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="sim-skill-three-field" class="h-5 w-5 rounded accent-bg">
+                                <span>Enable "Three-field System" (5x Influence)</span>
+                            </label>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="sim-harvest-btn" class="btn flex-1">Harvest</button>
+                            <button id="sim-reset-btn" class="btn btn-secondary flex-1">Reset</button>
+                        </div>
+                        <div id="sim-crop-info" class="p-3 bg-white/50 rounded-md border border-gray-200">
+                            <p class="text-sm">Select a crop to see its influence properties.</p>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2">
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div class="chart-container">
+                                <canvas id="influenceChart"></canvas>
+                            </div>
+                            <div id="sim-results" class="space-y-4">
+                                <h3 class="text-xl font-bold">Current State & Prediction</h3>
+                                <div class="space-y-2">
+                                    <div>
+                                        <div class="flex justify-between items-baseline mb-1">
+                                            <span class="font-semibold">Red Influence</span>
+                                            <span id="red-value" class="font-mono">0</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full"><div id="red-bar" class="influence-bar bg-red-400" style="width: 0%;"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between items-baseline mb-1">
+                                            <span class="font-semibold">Blue Influence</span>
+                                            <span id="blue-value" class="font-mono">0</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full"><div id="blue-bar" class="influence-bar bg-blue-400" style="width: 0%;"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between items-baseline mb-1">
+                                            <span class="font-semibold">Green Influence</span>
+                                            <span id="green-value" class="font-mono">0</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full"><div id="green-bar" class="influence-bar bg-green-400" style="width: 0%;"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between items-baseline mb-1">
+                                            <span class="font-semibold">Pink Influence</span>
+                                            <span id="pink-value" class="font-mono">0</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full"><div id="pink-bar" class="influence-bar bg-pink-400" style="width: 0%;"></div></div>
+                                    </div>
+                                </div>
+                                <div class="p-4 bg-lime-100 border border-lime-300 rounded-md text-center">
+                                    <p class="font-semibold">Predicted Harvest for <span id="predicted-crop-name" class="font-bold">...</span>:</p>
+                                    <p class="text-2xl font-bold accent-text" id="predicted-tier">Tier 1</p>
+                                    <p class="text-sm text-gray-600">Total Influence: <span id="predicted-influence-total" class="font-mono">0</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="rotations" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-2 text-center">Optimal Crop Rotation Planner</h2>
+            <p class="text-center mb-8 max-w-3xl mx-auto text-lg text-gray-600">Want a specific Tier 3 crop? This planner gives you the most effective rotation sequence. Select your target, and follow the simple, step-by-step guide to achieve high-value harvests.</p>
+            <div class="card max-w-4xl mx-auto">
+                <div class="mb-4">
+                    <label for="rotation-goal" class="font-semibold block mb-2 text-xl">My Goal: Harvest Tier 3...</label>
+                    <select id="rotation-goal" class="w-full p-3 border rounded-md bg-white text-lg"></select>
+                </div>
+                <div id="rotation-plan" class="mt-6">
+                    <p class="text-center text-gray-500">Select a crop goal to see the recommended rotation plan.</p>
+                </div>
+            </div>
+        </section>
 
-        <h3>1. Efficient Codebase</h3>
-        <ul>
-            <li>Use clear naming (variables, functions).</li>
-            <li>Follow style guides; avoid magic numbers.</li>
-            <li>Write meaningful comments.</li>
-        </ul>
-        <pre><code>// Good example:
-const maxRetries = 42;</code></pre>
+        <section id="reference" class="scroll-mt-24">
+            <h2 class="text-3xl font-bold mb-2 text-center">Quick Reference</h2>
+            <p class="text-center mb-8 max-w-3xl mx-auto text-lg text-gray-600">All the core data in one place. Use the search box to quickly filter the tables for crops, fertilizers, and tier requirements.</p>
+            <div class="card">
+                <input type="text" id="reference-search" placeholder="Search tables..." class="w-full p-2 border rounded-md mb-6">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-bold mb-4">Crop Influences</h3>
+                        <div class="overflow-x-auto">
+                            <table id="crop-table" class="w-full text-left">
+                                <thead class="border-b-2 accent-border"><tr><th class="p-2">Crop</th><th class="p-2">Influenced By</th><th class="p-2">Influences</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-4">Fertilizer Effects</h3>
+                        <div class="overflow-x-auto">
+                           <table id="fertilizer-table" class="w-full text-left">
+                               <thead class="border-b-2 accent-border"><tr><th class="p-2">Fertilizer</th><th class="p-2">Primary Effect</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <h3 class="text-xl font-bold mt-8 mb-4">Tier Thresholds</h3>
+                        <div class="overflow-x-auto">
+                           <table id="tier-table" class="w-full text-left">
+                               <thead class="border-b-2 accent-border"><tr><th class="p-2">Total Influence</th><th class="p-2">Resulting Tier</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <h3>2. Balanced Scalability</h3>
-        <ul>
-            <li>Prioritize vertical scaling before horizontal.</li>
-            <li>Use caching, async processing, event-driven architecture.</li>
-            <li>Understand trade-offs between monoliths and microservices.</li>
-        </ul>
-
-        <h3>3. Adaptive Design</h3>
-        <ul>
-            <li>Use design patterns like Repository, Strategy, Factory.</li>
-            <li>Favor interfaces over concrete implementations.</li>
-            <li>Support feature flags and canary deployments.</li>
-        </ul>
-        <pre><code>type DataStore interface {
-    Get(id string) (*Data, error)
-}</code></pre>
-
-        <h3>4. Learning-Driven Development</h3>
-        <ul>
-            <li>Encourage educational peer reviews.</li>
-            <li>Share resources during code reviews.</li>
-            <li>Support hackathons and side projects.</li>
-        </ul>
-
-        <h3>5. Inclusive Collaboration</h3>
-        <ul>
-            <li>Default to open documentation.</li>
-            <li>Create accessible tools and environments.</li>
-            <li>Provide comprehensive README files.</li>
-        </ul>
-
-        <h2>FAQ</h2>
-        <ul>
-            <li><strong>Isn’t this just common sense?</strong> Yes—but formalizing it ensures consistency across teams.</li>
-            <li><strong>How does it relate to SOLID/DRY?</strong> Complements them with team and system-level thinking.</li>
-            <li><strong>Works in legacy systems?</strong> Yes—with incremental adoption.</li>
-        </ul>
-
-        <h2>Conclusion</h2>
-        <p>EBALI helps teams build better systems together by focusing on people, clarity, and long-term sustainability.</p>
-        <blockquote>“Great code doesn’t write itself. Great teams do.”</blockquote>
     </main>
 
-    <footer>
-        &copy; 2025 EBALI Guide | Created with ❤️ by Your Team
+    <footer class="text-center p-8 mt-16 text-gray-500">
+        <p>Interactive guide based on the Salem farming system. For educational and gameplay purposes.</p>
     </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const influenceColors = {
+        Red: '#E57373', Blue: '#64B5F6', Green: '#81C784', Pink: '#F06292'
+    };
+    const influenceMap = { 1: 'Red', 2: 'Blue', 3: 'Green', 4: 'Pink' };
+
+    const db = {
+        crops: {
+            'Ear of Cereal': { influencedBy: [4, 1], influences: 2, tiers: {t1: 'Oats', t2a: 'Rye (Pink > Red)', t2b: 'Barley (Red > Pink)', t3: 'Wheat'} },
+            'Cabbage': { influencedBy: [3, 4], influences: 1, tiers: {t1: 'Green Cabbage', t2a: 'White Cabbage (Pink > Green)', t2b: 'Green Cabbage (Green > Pink)', t3: 'Red Cabbage'} },
+            'Cotton': { influencedBy: [1, 2], influences: 3, tiers: {t1: 'Indian Cotton', t2a: 'Egyptian Cotton (Blue > Red)', t2b: 'Indian Cotton (Red > Blue)', t3: 'Sea Island Cotton'} },
+            'Pumpkin': { influencedBy: [2, 3], influences: 4, tiers: {t1: 'Connecticut Field', t2a: 'Sugar Treat', t2b: 'Harvest Moon', t3: 'Jack-o-Lantern'} },
+            'Corn': { influencedBy: [1, 3], influences: 2, tiers: {t1: 'Yellow Corn', t2a: 'Blue Corn', t2b: 'Indian Corn', t3: 'Glass Gem Corn'} },
+            'Any Potato': { influencedBy: [3, 4], influences: 1, tiers: {t1: 'Common Potato', t2a: 'Sweet Potato', t2b: 'Red Potato', t3: 'Blue Potato'} },
+            'Tobacco': { influencedBy: [1, 2], influences: 3, tiers: {t1: 'Common Tobacco', t2a: 'Virginia Tobacco', t2b: 'Burley Tobacco', t3: 'Perique'} },
+        },
+        fertilizers: {
+            'None': { effect: 'None' },
+            'Hay': { effect: 'Influence (+40%)' },
+            'Clay': { effect: 'Influence' },
+            'Lime': { effect: 'Plenty, Speed' },
+            'Coal': { effect: 'Plenty, Speed' },
+            'Humus': { effect: 'Speed, Plenty, Influence' },
+            'Crown Manure': { effect: 'Speed, Plenty' },
+            'Wood Choppings': { effect: 'Upkeep Reduction' },
+        },
+        tierThresholds: [
+            { range: '0 - 75', tier: 'Tier 1' },
+            { range: '75 - 100', tier: 'Mix of Tier 1 & 2' },
+            { range: '100 - 150', tier: 'Tier 2' },
+            { range: '150 - 195', tier: 'Mix of Tier 2 & 3' },
+            { range: '150+', tier: 'Tier 3 (Wheat specific: 150+)' },
+        ],
+        rotationPlans: {
+            'Cabbage (Red Cabbage)': {
+                goal: 'Red Cabbage', influencedBy: [3, 4], steps: [
+                    { step: 1, crop: 'Cotton / Tobacco', action: 'Builds Green Influence (Bar 3)', details: 'Plant repeatedly, using influence fertilizers like Hay, until Green bar is high (ideally 100).' },
+                    { step: 2, crop: 'Pumpkin', action: 'Builds Pink Influence (Bar 4)', details: 'Switch to Pumpkin to raise the Pink bar to a high level (ideally 100).' },
+                    { step: 3, crop: 'Plant Cabbage', action: 'Harvest Tier 3', details: 'With both Green and Pink influence high (150-195+ total), plant Cabbage. Use Plenty fertilizers like Lime for max yield.' }
+                ]
+            },
+            'Cotton (Sea Island Cotton)': {
+                goal: 'Sea Island Cotton', influencedBy: [1, 2], steps: [
+                    { step: 1, crop: 'Cabbage / Any Potato', action: 'Builds Red Influence (Bar 1)', details: 'Plant repeatedly to raise the Red bar to a high level.' },
+                    { step: 2, crop: 'Ear of Cereals / Corn', action: 'Builds Blue Influence (Bar 2)', details: 'Switch to Cereals or Corn to raise the Blue bar to a high level.' },
+                    { step: 3, crop: 'Plant Cotton', action: 'Harvest Tier 3', details: 'With Red and Blue influence high, plant Cotton for your Tier 3 reward.' }
+                ]
+            },
+            'Ear of Cereal (Wheat)': {
+                goal: 'Wheat', influencedBy: [4, 1], steps: [
+                    { step: 1, crop: 'Pumpkin', action: 'Builds Pink Influence (Bar 4)', details: 'Plant Pumpkin repeatedly with influence fertilizers to max out the Pink bar.' },
+                    { step: 2, crop: 'Cabbage / Any Potato', action: 'Builds Red Influence (Bar 1)', details: 'Switch to Cabbage or Potatoes to max out the Red bar.' },
+                    { step: 3, crop: 'Plant Ear of Cereal', action: 'Harvest Tier 3', details: 'With Pink and Red influence combining to 150+, plant Cereal. Wheat is guaranteed.' }
+                ]
+            }
+        }
+    };
+
+    let chartInstance = null;
+    let simState = { Red: 0, Blue: 0, Green: 0, Pink: 0 };
+
+    function setup() {
+        populateSelectors();
+        populateTables();
+        initChart();
+        setupEventListeners();
+        updateSimUI();
+    }
+
+    function populateSelectors() {
+        const cropSelect = document.getElementById('sim-crop');
+        const fertilizerSelect = document.getElementById('sim-fertilizer');
+        const rotationSelect = document.getElementById('rotation-goal');
+
+        Object.keys(db.crops).forEach(crop => {
+            cropSelect.innerHTML += `<option value="${crop}">${crop}</option>`;
+        });
+        Object.keys(db.fertilizers).forEach(fert => {
+            fertilizerSelect.innerHTML += `<option value="${fert}">${fert}</option>`;
+        });
+        Object.keys(db.rotationPlans).forEach(plan => {
+            rotationSelect.innerHTML += `<option value="${plan}">${plan}</option>`;
+        });
+        rotationSelect.insertAdjacentHTML('afterbegin', '<option value="" selected disabled>Select a Tier 3 Goal...</option>');
+    }
+
+    function populateTables() {
+        const cropBody = document.querySelector('#crop-table tbody');
+        for (const crop in db.crops) {
+            const data = db.crops[crop];
+            const influencedBy = data.influencedBy.map(i => `<span style="color:${influenceColors[influenceMap[i]]};" class="font-bold">${influenceMap[i]}</span>`).join(' & ');
+            const influences = `<span style="color:${influenceColors[influenceMap[data.influences]]};" class="font-bold">${influenceMap[data.influences]}</span>`;
+            cropBody.innerHTML += `<tr class="border-b border-gray-200" data-searchable="${crop.toLowerCase()}">
+                <td class="p-2 font-semibold">${crop}</td><td class="p-2">${influencedBy}</td><td class="p-2">${influences}</td>
+            </tr>`;
+        }
+
+        const fertBody = document.querySelector('#fertilizer-table tbody');
+        for (const fert in db.fertilizers) {
+            fertBody.innerHTML += `<tr class="border-b border-gray-200" data-searchable="${fert.toLowerCase()}">
+                <td class="p-2 font-semibold">${fert}</td><td class="p-2">${db.fertilizers[fert].effect}</td>
+            </tr>`;
+        }
+
+        const tierBody = document.querySelector('#tier-table tbody');
+        db.tierThresholds.forEach(t => {
+            tierBody.innerHTML += `<tr class="border-b border-gray-200" data-searchable="${t.tier.toLowerCase()} ${t.range}">
+                <td class="p-2 font-semibold">${t.range}</td><td class="p-2">${t.tier}</td>
+            </tr>`;
+        });
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('influenceChart').getContext('2d');
+        chartInstance = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['Red', 'Blue', 'Green', 'Pink'],
+                datasets: [{
+                    label: 'Influence Levels',
+                    data: [0, 0, 0, 0],
+                    backgroundColor: 'rgba(198, 123, 92, 0.2)',
+                    borderColor: 'rgba(198, 123, 92, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(198, 123, 92, 1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(78, 68, 58, 0.2)' },
+                        grid: { color: 'rgba(78, 68, 58, 0.2)' },
+                        pointLabels: {
+                            font: { size: 14, weight: 'bold' },
+                            color: ['#E57373', '#64B5F6', '#81C784', '#F06292']
+                        },
+                        ticks: {
+                            color: 'rgba(78, 68, 58, 0.7)',
+                            backdropColor: '#FDFBF5',
+                            stepSize: 25,
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 100
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    function updateSimUI() {
+        const selectedCropName = document.getElementById('sim-crop').value;
+        const cropData = db.crops[selectedCropName];
+        
+        const infoBox = document.getElementById('sim-crop-info');
+        const influencedBy = cropData.influencedBy.map(i => `<span style="color:${influenceColors[influenceMap[i]]}; font-weight: bold;">${influenceMap[i]}</span>`).join(' and ');
+        const influences = `<span style="color:${influenceColors[influenceMap[cropData.influences]]}; font-weight: bold;">${influenceMap[cropData.influences]}</span>`;
+        infoBox.innerHTML = `<strong>${selectedCropName}</strong> is influenced by ${influencedBy}. Upon harvest, it will increase ${influences} influence.`;
+        
+        chartInstance.data.datasets[0].data = Object.values(simState);
+        chartInstance.update('none');
+
+        document.getElementById('red-value').textContent = Math.round(simState.Red);
+        document.getElementById('blue-value').textContent = Math.round(simState.Blue);
+        document.getElementById('green-value').textContent = Math.round(simState.Green);
+        document.getElementById('pink-value').textContent = Math.round(simState.Pink);
+
+        document.getElementById('red-bar').style.width = `${simState.Red}%`;
+        document.getElementById('blue-bar').style.width = `${simState.Blue}%`;
+        document.getElementById('green-bar').style.width = `${simState.Green}%`;
+        document.getElementById('pink-bar').style.width = `${simState.Pink}%`;
+
+        const totalInfluence = simState[influenceMap[cropData.influencedBy[0]]] + simState[influenceMap[cropData.influencedBy[1]]];
+        let tier = 'Tier 1';
+        if (totalInfluence >= 150) tier = 'Tier 2 & 3 Mix (or T3 Wheat)';
+        else if (totalInfluence >= 100) tier = 'Tier 2';
+        else if (totalInfluence >= 75) tier = 'Tier 1 & 2 Mix';
+
+        document.getElementById('predicted-crop-name').textContent = selectedCropName;
+        document.getElementById('predicted-tier').textContent = tier;
+        document.getElementById('predicted-influence-total').textContent = Math.round(totalInfluence);
+    }
+    
+    function runSimulation() {
+        const selectedCropName = document.getElementById('sim-crop').value;
+        const cropData = db.crops[selectedCropName];
+        const hasThreeField = document.getElementById('sim-skill-three-field').checked;
+        const fertilizer = document.getElementById('sim-fertilizer').value;
+
+        let influenceGain = 50;
+        if(fertilizer === 'Hay' || fertilizer === 'Clay' || fertilizer === 'Humus') {
+            influenceGain = 100;
+        }
+
+        const multiplier = hasThreeField ? 5 : 3;
+        const gain = influenceGain * (multiplier / 10);
+        const barToIncrease = influenceMap[cropData.influences];
+
+        Object.keys(simState).forEach(key => {
+            if (key === barToIncrease) {
+                simState[key] += gain;
+            } else {
+                simState[key] -= 5;
+            }
+            if (simState[key] < 0) simState[key] = 0;
+            if (simState[key] > 100) simState[key] = 100;
+        });
+
+        updateSimUI();
+    }
+    
+    function resetSimulation() {
+        simState = { Red: 0, Blue: 0, Green: 0, Pink: 0 };
+        updateSimUI();
+    }
+
+    function updateRotationPlan() {
+        const planName = document.getElementById('rotation-goal').value;
+        const planData = db.rotationPlans[planName];
+        const planContainer = document.getElementById('rotation-plan');
+
+        if (!planData) {
+            planContainer.innerHTML = '<p class="text-center text-gray-500">Select a crop goal to see the recommended rotation plan.</p>';
+            return;
+        }
+
+        let html = '<div class="space-y-6">';
+        planData.steps.forEach((step, index) => {
+            html += `
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0 h-12 w-12 rounded-full accent-bg flex items-center justify-center text-white font-bold text-xl">${step.step}</div>
+                    <div class="flex-1">
+                        <h4 class="font-bold text-lg">${step.action}</h4>
+                        <p class="text-gray-600"><strong class="text-gray-800">Plant:</strong> ${step.crop}</p>
+                        <p class="text-sm text-gray-500 mt-1">${step.details}</p>
+                    </div>
+                </div>
+            `;
+            if (index < planData.steps.length - 1) {
+                html += '<div class="pl-5"><div class="h-6 w-px bg-gray-300 ml-5"></div></div>';
+            }
+        });
+        html += '</div>';
+
+        planContainer.innerHTML = html;
+    }
+
+    function handleSearch() {
+        const query = document.getElementById('reference-search').value.toLowerCase();
+        document.querySelectorAll('#reference [data-searchable]').forEach(row => {
+            const content = row.getAttribute('data-searchable');
+            if (content.includes(query)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    function setupEventListeners() {
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const content = header.nextElementSibling;
+                const icon = header.querySelector('span:last-child');
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                    icon.style.transform = 'rotate(0deg)';
+                } else {
+                    document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
+                    document.querySelectorAll('.accordion-header span:last-child').forEach(i => i.style.transform = 'rotate(0deg)');
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+
+        document.getElementById('sim-crop').addEventListener('change', updateSimUI);
+        document.getElementById('sim-harvest-btn').addEventListener('click', runSimulation);
+        document.getElementById('sim-reset-btn').addEventListener('click', resetSimulation);
+        document.getElementById('rotation-goal').addEventListener('change', updateRotationPlan);
+        document.getElementById('reference-search').addEventListener('input', handleSearch);
+
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('section');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 120) {
+                    current = section.getAttribute('id');
+                }
+            });
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').includes(current)) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    }
+
+    setup();
+});
+</script>
+
 </body>
 </html>
