@@ -3,288 +3,297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Guide to Salem Farming</title>
+    <title>The Archives of Rivendell: Legendary Items Guide</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Chosen Palette: Warm Parchment -->
-    <!-- Application Structure Plan: A task-oriented, non-linear Single Page Application. It features a top navigation bar for quick access to four distinct sections: 1. "Fundamentals" uses an accordion UI for beginners to learn setup and basic concepts without clutter. 2. The core is the "Influence Simulator," an interactive dashboard with a Chart.js radar chart and controls, allowing users to learn the complex influence system by doing. 3. The "Rotation Planner" is a goal-oriented tool that takes a user's desired crop and generates a simple, visual step-by-step guide. 4. A "Quick Reference" section provides filterable tables for experienced players needing quick data lookups. This structure was chosen to cater to different user needs and learning styles, transforming a dense text report into an engaging and useful tool. -->
-    <!-- Visualization & Content Choices: 1. Influence System: Report Info -> 4 influence bars, crop interactions. Goal -> Explain this dynamic system. Viz -> Chart.js Radar Chart. Interaction -> User selects crop/fertilizer, clicks "Harvest" to see the chart animate and values update. Justification -> A dynamic, interactive model is superior to static text for explaining a complex, interconnected system. 2. Crop Rotations: Report Info -> Tables of rotation sequences. Goal -> Provide clear, actionable plans. Viz -> Dynamically generated HTML/CSS flowchart. Interaction -> User selects a goal, the plan appears. Justification -> A visual flow is much easier to follow than a table. 3. Data Tables (Crops, Fertilizers, Tiers): Report Info -> Various data points. Goal -> Provide quick reference. Viz -> Filterable HTML tables. Interaction -> Text search. Justification -> Efficient for structured data lookup for power users. Library/Method -> Chart.js for the radar chart, vanilla JS and Tailwind for all other components. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* Chosen Palette: Rivendell Archives */
+        :root {
+            --color-bg: #F5F2E9; /* Parchment */
+            --color-text: #2C241B; /* Dark Ink */
+            --color-accent: #DAA520; /* Elven Gold */
+            --color-primary: #2F4F4F; /* Slate Green/Blue */
+            --color-secondary: #8B4513; /* Leather */
+        }
+        
         body {
-            background-color: #FDFBF5;
-            color: #4E443A;
-            font-family: 'Georgia', serif;
+            font-family: 'Lato', sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
         }
-        .accent-bg { background-color: #C67B5C; }
-        .accent-text { color: #C67B5C; }
-        .accent-border { border-color: #C67B5C; }
-        .main-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1rem;
+
+        h1, h2, h3, h4, .cinzel {
+            font-family: 'Cinzel', serif;
         }
-        .card {
-            background-color: #F5F0E6;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            padding: 1.5rem;
-            border: 1px solid #EAE0D1;
-        }
-        .nav-link {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-        }
-        .nav-link:hover, .nav-link.active {
-            background-color: #EAE0D1;
-            color: #4E443A;
-        }
-        .btn {
-            background-color: #C67B5C;
-            color: #FDFBF5;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: bold;
-            transition: background-color 0.2s;
-            text-align: center;
-        }
-        .btn:hover {
-            background-color: #B56A4B;
-        }
-        .btn-secondary {
-            background-color: #A08C7D;
-        }
-        .btn-secondary:hover {
-            background-color: #8A7667;
-        }
-        .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-in-out;
-        }
+
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
             margin-left: auto;
             margin-right: auto;
-            height: auto;
-            min-height: 300px;
+            height: 300px;
+            max-height: 400px;
         }
-        @media (min-width: 768px) {
-            .chart-container {
-                min-height: 400px;
-            }
+
+        .slot-glow:hover {
+            box-shadow: 0 0 15px var(--color-accent);
+            transform: scale(1.02);
         }
-        .influence-bar {
-            height: 10px;
-            border-radius: 5px;
-            transition: width 0.5s ease-in-out;
+
+        .nav-btn.active {
+            border-bottom: 2px solid var(--color-accent);
+            color: var(--color-primary);
+            font-weight: bold;
+        }
+
+        /* Custom Scrollbar for inner content */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #e0dcd0;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: var(--color-secondary);
+            border-radius: 4px;
         }
     </style>
+    <!-- Application Structure Plan: 
+         1. Hero Section: Immediate answer to the "What is an LI" question.
+         2. The Anatomy of Legend: Interactive schematic of an LI. Users click slots (Heraldry, Word of Power) to understand the new system (Traceries).
+         3. The Crafting Nexus: The core interactive element answering the user's specific prompt. Select a profession -> Get a report card on its usefulness for LIs.
+         4. Power Curve Analysis: Chart.js visualization showing why LIs outpace crafting for main-hand weapons.
+         5. FAQ/Myths: Addressing "First Age" confusion and "Reforging".
+    -->
+    <!-- Visualization & Content Choices:
+         - Chart.js Line Chart: To compare Weapon DPS over levels (LI vs Crafted) to visually prove LIs are superior.
+         - Chart.js Doughnut Chart: To show the source of LI Power (Base vs Traceries vs Runes).
+         - Interactive Grid (The Crafting Nexus): Replaces a static table. Enhances exploration of professions.
+         - Modal/Details View (LI Anatomy): Allows users to focus on one complex part (e.g., Heraldry Traceries) at a time.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 </head>
-<body class="antialiased">
+<body class="flex flex-col min-h-screen">
 
-    <header class="sticky top-0 bg-white/80 backdrop-blur-md z-10 shadow-sm">
-        <div class="main-container flex items-center justify-between py-4">
-            <h1 class="text-2xl font-bold accent-text">Salem Farming Guide</h1>
-            <nav class="hidden md:flex items-center space-x-2">
-                <a href="#fundamentals" class="nav-link">Fundamentals</a>
-                <a href="#simulator" class="nav-link">Simulator</a>
-                <a href="#rotations" class="nav-link">Rotations</a>
-                <a href="#reference" class="nav-link">Reference</a>
-            </nav>
+    <!-- Navigation -->
+    <nav class="bg-[#2F4F4F] text-[#F5F2E9] shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="text-xl cinzel font-bold text-[#DAA520] flex items-center gap-2">
+                <span>✦</span> The Last Homely House
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <button onclick="navTo('overview')" class="nav-btn hover:text-[#DAA520] transition">Overview</button>
+                <button onclick="navTo('anatomy')" class="nav-btn hover:text-[#DAA520] transition">Anatomy of an LI</button>
+                <button onclick="navTo('crafting')" class="nav-btn hover:text-[#DAA520] transition">Crafting & LIs</button>
+                <button onclick="navTo('strategy')" class="nav-btn hover:text-[#DAA520] transition">Strategy</button>
+            </div>
+            <button class="md:hidden text-[#DAA520]" onclick="toggleMobileMenu()">☰</button>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-[#263e3e] px-4 py-2 flex flex-col space-y-2">
+            <button onclick="navTo('overview')" class="text-left py-2 border-b border-gray-600">Overview</button>
+            <button onclick="navTo('anatomy')" class="text-left py-2 border-b border-gray-600">Anatomy of an LI</button>
+            <button onclick="navTo('crafting')" class="text-left py-2 border-b border-gray-600">Crafting & LIs</button>
+            <button onclick="navTo('strategy')" class="text-left py-2">Strategy</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="overview" class="bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')] bg-cover py-12 px-4 text-center border-b-4 border-[#8B4513]">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl md:text-5xl text-[#2F4F4F] font-bold mb-4">The Legend in Your Hand</h1>
+            <p class="text-xl text-[#5a4a3a] mb-8">A comprehensive guide to the <span class="font-bold">New Legendary Item System</span> in Lord of the Rings Online.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                <div class="bg-white/80 p-6 rounded-lg shadow-md border-l-4 border-[#DAA520]">
+                    <h3 class="font-bold text-lg mb-2 text-[#8B4513]">Quick Answer: Can I Craft Them?</h3>
+                    <p class="text-sm md:text-base">
+                        <strong class="text-red-700">No.</strong> In the current system, you cannot craft the base Legendary Weapon or Class Item. You obtain them via quests or the Archives in Rivendell. However, crafting <em>is</em> vital for creating special upgrades called "Traceries."
+                    </p>
+                </div>
+                <div class="bg-white/80 p-6 rounded-lg shadow-md border-l-4 border-[#2F4F4F]">
+                    <h3 class="font-bold text-lg mb-2 text-[#8B4513]">Should I Bother With Crafting?</h3>
+                    <p class="text-sm md:text-base">
+                        <strong class="text-green-700">Yes!</strong> While you don't hammer out the sword itself, you need crafting for:
+                        <ul class="list-disc list-inside mt-1 text-sm">
+                            <li><strong>Word of Craft Traceries</strong> (Powerful stat bonuses)</li>
+                            <li><strong>Off-hand Weapons</strong> (LIs are Main-hand only)</li>
+                            <li><strong>Shields, Armor & Jewelry</strong></li>
+                        </ul>
+                    </p>
+                </div>
+            </div>
         </div>
     </header>
 
-    <main class="main-container mt-8">
-        
-        <section id="fundamentals" class="mb-16 scroll-mt-24">
-            <h2 class="text-3xl font-bold mb-2 text-center">Farming Fundamentals</h2>
-            <p class="text-center mb-8 max-w-3xl mx-auto text-lg text-gray-600">New to farming in Salem? Start here. This section covers the essential knowledge to set up your first farm, understand core mechanics, and learn the critical skills for success.</p>
-            <div class="space-y-4 max-w-4xl mx-auto">
-                <div class="accordion-item card">
-                    <button class="accordion-header w-full flex justify-between items-center text-left text-xl font-semibold">
-                        <span>First Field Setup: A 5-Step Guide</span>
-                        <span class="transform transition-transform duration-300">▼</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="pt-4 text-gray-700 space-y-3">
-                            <p><strong>1. Claim Your Land:</strong> Use a Claimstone (requires "Settling" skill) to protect your fields from other players. Location near shallow water and a Clay Pit is ideal.</p>
-                            <p><strong>2. Till the Land:</strong> Construct a 4x4 Tilled Field on flat ground. Using a Wooden Hoe reduces construction time and cost.</p>
-                            <p><strong>3. Beat the Crows:</strong> Build a Scarecrow or, more effectively, pave an area and build a fence around your fields to prevent crows from spiking your upkeep to 600%.</p>
-                            <p><strong>4. Get Humus & Seeds:</strong> Generate Humus in a Compost Bin. For your first planting, purchase Cotton seeds from Spuds McArtor in Providence.</p>
-                            <p><strong>5. Slash Upkeep:</strong> This is critical! On a new field, add Wood Choppings until upkeep drops from 100% to 50%. This permanently halves the Humus and seed cost for all future plantings on that field.</p>
+    <!-- Main Content Container -->
+    <main class="container mx-auto px-4 py-8 flex-grow">
+
+        <!-- SECTION: ANATOMY -->
+        <section id="anatomy" class="mb-16 scroll-mt-24">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl text-[#2F4F4F] mb-3">Anatomy of a Legendary Item</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto">The new LI system is modular. Your weapon is an empty shell powered by <strong>Traceries</strong>. Click the components below to understand how they work.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                
+                <!-- Interactive Schematic -->
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-xl p-6 border border-[#d4c5b0]">
+                    <div class="flex flex-col gap-4">
+                        <!-- The Item Shell -->
+                        <div onclick="selectPart('shell')" class="slot-glow cursor-pointer bg-[#2F4F4F] text-[#DAA520] p-4 rounded-lg flex items-center justify-between transition">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl">⚔️</span>
+                                <div>
+                                    <h3 class="font-bold text-lg">The Vessel (Weapon/Item)</h3>
+                                    <p class="text-xs text-gray-300">Level 50+ | Grows with Reforging</p>
+                                </div>
+                            </div>
+                            <span class="text-2xl">➔</span>
+                        </div>
+
+                        <!-- Slots Visualization -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div onclick="selectPart('heraldry')" class="slot-glow cursor-pointer bg-red-100 border-2 border-red-300 p-3 rounded text-center">
+                                <div class="text-2xl mb-1">🛡️</div>
+                                <div class="font-bold text-xs uppercase text-red-800">Heraldry</div>
+                            </div>
+                            <div onclick="selectPart('mastery')" class="slot-glow cursor-pointer bg-blue-100 border-2 border-blue-300 p-3 rounded text-center">
+                                <div class="text-2xl mb-1">⚡</div>
+                                <div class="font-bold text-xs uppercase text-blue-800">Power</div>
+                            </div>
+                            <div onclick="selectPart('craft')" class="slot-glow cursor-pointer bg-green-100 border-2 border-green-300 p-3 rounded text-center">
+                                <div class="text-2xl mb-1">🔨</div>
+                                <div class="font-bold text-xs uppercase text-green-800">Craft</div>
+                            </div>
+                            <div onclick="selectPart('mastery')" class="slot-glow cursor-pointer bg-purple-100 border-2 border-purple-300 p-3 rounded text-center">
+                                <div class="text-2xl mb-1">✨</div>
+                                <div class="font-bold text-xs uppercase text-purple-800">Mastery</div>
+                            </div>
+                        </div>
+
+                        <!-- Reforging Bar -->
+                        <div onclick="selectPart('reforge')" class="slot-glow cursor-pointer bg-gray-200 mt-4 h-12 rounded-full relative overflow-hidden border border-gray-400">
+                            <div class="absolute top-0 left-0 h-full bg-[#DAA520] w-3/4 flex items-center justify-center text-white font-bold text-sm shadow opacity-80">Item Level 490 / 520</div>
+                            <div class="absolute top-0 right-4 h-full flex items-center text-xs text-gray-600 font-bold">REFORGE AVAILABLE</div>
                         </div>
                     </div>
                 </div>
-                <div class="accordion-item card">
-                    <button class="accordion-header w-full flex justify-between items-center text-left text-xl font-semibold">
-                        <span>Essential Skills for Farmers</span>
-                        <span class="transform transition-transform duration-300">▼</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="pt-4 text-gray-700 space-y-2">
-                            <p><strong class="accent-text">Agriculture:</strong> The foundational skill. Unlocks Tilled Fields and allows you to plant Cereals. Requires "Colonial Tradesmanship", 200 "Herbs & Sprouts", and 640 "Stocks & Cultivars".</p>
-                            <p><strong class="accent-text">Three-field System:</strong> The most important skill for advanced farming. It boosts influence gain from 3x to 5x per harvest, dramatically accelerating your progress to high-tier crops.</p>
-                             <p><strong class="accent-text">Plantation Management:</strong> Allows you to use the "Tend" action to permanently lower the base upkeep of a field below the natural 50% cap.</p>
+
+                <!-- Detail Panel -->
+                <div id="anatomy-detail" class="bg-[#FDFBF7] p-6 rounded-xl border-t-4 border-[#2F4F4F] shadow-lg h-full min-h-[300px]">
+                    <h3 id="detail-title" class="text-2xl font-bold text-[#2F4F4F] mb-2">Select a Component</h3>
+                    <p id="detail-desc" class="text-gray-700 leading-relaxed">Click on the weapon parts to the left to learn specifically how they function, where to get them, and if crafting is involved.</p>
+                    
+                    <div id="detail-meta" class="mt-6 hidden">
+                        <div class="bg-white p-3 rounded border border-gray-200 mb-2">
+                            <span class="font-bold text-xs text-gray-500 uppercase block">Acquisition</span>
+                            <span id="meta-acq" class="text-sm font-semibold">Quest / Archives</span>
+                        </div>
+                        <div class="bg-white p-3 rounded border border-gray-200">
+                            <span class="font-bold text-xs text-gray-500 uppercase block">Craftable?</span>
+                            <span id="meta-craft" class="text-sm font-semibold text-red-600">No</span>
                         </div>
                     </div>
                 </div>
-                 <div class="accordion-item card">
-                    <button class="accordion-header w-full flex justify-between items-center text-left text-xl font-semibold">
-                        <span>Tilled Fields vs. Gardening Pots</span>
-                        <span class="transform transition-transform duration-300">▼</span>
-                    </button>
-                    <div class="accordion-content">
-                        <div class="pt-4 grid md:grid-cols-2 gap-6">
+            </div>
+        </section>
+
+        <!-- SECTION: CRAFTING NEXUS -->
+        <section id="crafting" class="mb-16 scroll-mt-24 bg-white rounded-xl shadow-xl overflow-hidden">
+            <div class="bg-[#2F4F4F] p-6 text-white flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-2xl cinzel font-bold">The Crafting Nexus</h2>
+                    <p class="text-sm text-gray-300">Select your profession to see its relevance to the Legendary System.</p>
+                </div>
+                <div class="flex gap-2 flex-wrap justify-center">
+                    <button onclick="filterProfession('scholar')" class="prof-btn px-3 py-1 bg-[#1a2e2e] hover:bg-[#DAA520] rounded text-xs uppercase tracking-wider transition">Scholar</button>
+                    <button onclick="filterProfession('weaponsmith')" class="prof-btn px-3 py-1 bg-[#1a2e2e] hover:bg-[#DAA520] rounded text-xs uppercase tracking-wider transition">Weaponsmith</button>
+                    <button onclick="filterProfession('jeweller')" class="prof-btn px-3 py-1 bg-[#1a2e2e] hover:bg-[#DAA520] rounded text-xs uppercase tracking-wider transition">Jeweller</button>
+                    <button onclick="filterProfession('woodworker')" class="prof-btn px-3 py-1 bg-[#1a2e2e] hover:bg-[#DAA520] rounded text-xs uppercase tracking-wider transition">Woodworker</button>
+                    <button onclick="filterProfession('armourer')" class="prof-btn px-3 py-1 bg-[#1a2e2e] hover:bg-[#DAA520] rounded text-xs uppercase tracking-wider transition">Metalsmith</button>
+                    <button onclick="filterProfession('tailor')" class="prof-btn px-3 py-1 bg-[#1a2e2e] hover:bg-[#DAA520] rounded text-xs uppercase tracking-wider transition">Tailor</button>
+                </div>
+            </div>
+
+            <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 id="prof-title" class="text-2xl font-bold text-[#8B4513] mb-4">Select a Profession</h3>
+                    <p id="prof-desc" class="text-gray-700 mb-6">Click a button above to see exactly what that profession contributes to your Legendary Item journey.</p>
+                    
+                    <div id="prof-contributions" class="space-y-3 opacity-50">
+                        <!-- Dynamic Content injected here -->
+                        <div class="flex items-start gap-3 p-3 bg-gray-50 rounded">
+                            <span class="text-xl">❓</span>
                             <div>
-                                <h3 class="font-bold text-lg mb-2">Tilled Fields</h3>
-                                <ul class="list-disc list-inside space-y-1 text-gray-700">
-                                    <li>For large-scale farming of staple crops (Cereals, Cotton, etc.).</li>
-                                    <li>Complex mechanics: Upkeep, Fertilizers, and a 4-bar Influence system.</li>
-                                    <li>Goal is to manipulate influence to produce high-tier crops.</li>
-                                    <li>Requires significant setup and management.</li>
-                                </ul>
-                            </div>
-                             <div>
-                                <h3 class="font-bold text-lg mb-2">Gardening Pots</h3>
-                                <ul class="list-disc list-inside space-y-1 text-gray-700">
-                                    <li>For small-scale cultivation of foraged wild plants.</li>
-                                    <li>Simpler mechanics: Requires Humus and Water.</li>
-                                    <li>Reduces player Insanity.</li>
-                                    <li>Yield and Purity depend on Humus/Pot/Plant purity and "Herbs & Sprouts" skill.</li>
-                                </ul>
+                                <h4 class="font-bold text-sm">Waiting for input...</h4>
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <div class="flex flex-col justify-center items-center bg-[#F5F2E9] rounded-lg p-6">
+                    <h4 class="text-center font-bold text-gray-600 mb-4">Contribution to Player Power</h4>
+                    <div class="chart-container">
+                        <canvas id="craftingChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-gray-500 mt-2">Relative importance of this profession to a fully geared character.</p>
                 </div>
             </div>
         </section>
 
-        <section id="simulator" class="mb-16 scroll-mt-24">
-            <h2 class="text-3xl font-bold mb-2 text-center">The Influence System Simulator</h2>
-            <p class="text-center mb-8 max-w-3xl mx-auto text-lg text-gray-600">The heart of farming is the influence system. This tool lets you experiment with crops and fertilizers to see how they affect the four influence bars. Plan your harvests and master the path to high-tier crops.</p>
-            <div class="card">
-                <div class="grid lg:grid-cols-3 gap-8 items-start">
-                    <div class="lg:col-span-1 space-y-4">
-                        <h3 class="text-xl font-bold">Simulation Controls</h3>
-                        <div>
-                            <label for="sim-crop" class="font-semibold block mb-1">1. Choose Crop to Plant:</label>
-                            <select id="sim-crop" class="w-full p-2 border rounded-md bg-white"></select>
-                        </div>
-                        <div>
-                            <label for="sim-fertilizer" class="font-semibold block mb-1">2. Add Fertilizer (Optional):</label>
-                            <select id="sim-fertilizer" class="w-full p-2 border rounded-md bg-white"></select>
-                        </div>
-                        <div>
-                            <label class="font-semibold block mb-1">3. Skills:</label>
-                            <label class="flex items-center space-x-2">
-                                <input type="checkbox" id="sim-skill-three-field" class="h-5 w-5 rounded accent-bg">
-                                <span>Enable "Three-field System" (5x Influence)</span>
-                            </label>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button id="sim-harvest-btn" class="btn flex-1">Harvest</button>
-                            <button id="sim-reset-btn" class="btn btn-secondary flex-1">Reset</button>
-                        </div>
-                        <div id="sim-crop-info" class="p-3 bg-white/50 rounded-md border border-gray-200">
-                            <p class="text-sm">Select a crop to see its influence properties.</p>
-                        </div>
-                    </div>
-                    <div class="lg:col-span-2">
-                        <div class="grid md:grid-cols-2 gap-8 items-center">
-                            <div class="chart-container">
-                                <canvas id="influenceChart"></canvas>
-                            </div>
-                            <div id="sim-results" class="space-y-4">
-                                <h3 class="text-xl font-bold">Current State & Prediction</h3>
-                                <div class="space-y-2">
-                                    <div>
-                                        <div class="flex justify-between items-baseline mb-1">
-                                            <span class="font-semibold">Red Influence</span>
-                                            <span id="red-value" class="font-mono">0</span>
-                                        </div>
-                                        <div class="w-full bg-gray-200 rounded-full"><div id="red-bar" class="influence-bar bg-red-400" style="width: 0%;"></div></div>
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between items-baseline mb-1">
-                                            <span class="font-semibold">Blue Influence</span>
-                                            <span id="blue-value" class="font-mono">0</span>
-                                        </div>
-                                        <div class="w-full bg-gray-200 rounded-full"><div id="blue-bar" class="influence-bar bg-blue-400" style="width: 0%;"></div></div>
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between items-baseline mb-1">
-                                            <span class="font-semibold">Green Influence</span>
-                                            <span id="green-value" class="font-mono">0</span>
-                                        </div>
-                                        <div class="w-full bg-gray-200 rounded-full"><div id="green-bar" class="influence-bar bg-green-400" style="width: 0%;"></div></div>
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between items-baseline mb-1">
-                                            <span class="font-semibold">Pink Influence</span>
-                                            <span id="pink-value" class="font-mono">0</span>
-                                        </div>
-                                        <div class="w-full bg-gray-200 rounded-full"><div id="pink-bar" class="influence-bar bg-pink-400" style="width: 0%;"></div></div>
-                                    </div>
-                                </div>
-                                <div class="p-4 bg-lime-100 border border-lime-300 rounded-md text-center">
-                                    <p class="font-semibold">Predicted Harvest for <span id="predicted-crop-name" class="font-bold">...</span>:</p>
-                                    <p class="text-2xl font-bold accent-text" id="predicted-tier">Tier 1</p>
-                                    <p class="text-sm text-gray-600">Total Influence: <span id="predicted-influence-total" class="font-mono">0</span></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        <!-- SECTION: STRATEGY & CHARTS -->
+        <section id="strategy" class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16 scroll-mt-24">
+            
+            <!-- Power Curve Analysis -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-[#DAA520]">
+                <h3 class="text-xl font-bold text-[#2F4F4F] mb-2">The Power Gap: LI vs. Crafted</h3>
+                <p class="text-sm text-gray-600 mb-4">Why you should stop using standard weapons at Level 50.</p>
+                <div class="chart-container h-64">
+                    <canvas id="powerCurveChart"></canvas>
+                </div>
+                <div class="mt-4 bg-yellow-50 p-3 rounded border border-yellow-200 text-sm text-yellow-800">
+                    <strong>Insight:</strong> Legendary Items scale linearly with your character level via "Reforging." Crafted weapons (Standard) have fixed stats and become obsolete every few levels.
                 </div>
             </div>
-        </section>
-        
-        <section id="rotations" class="mb-16 scroll-mt-24">
-            <h2 class="text-3xl font-bold mb-2 text-center">Optimal Crop Rotation Planner</h2>
-            <p class="text-center mb-8 max-w-3xl mx-auto text-lg text-gray-600">Want a specific Tier 3 crop? This planner gives you the most effective rotation sequence. Select your target, and follow the simple, step-by-step guide to achieve high-value harvests.</p>
-            <div class="card max-w-4xl mx-auto">
-                <div class="mb-4">
-                    <label for="rotation-goal" class="font-semibold block mb-2 text-xl">My Goal: Harvest Tier 3...</label>
-                    <select id="rotation-goal" class="w-full p-3 border rounded-md bg-white text-lg"></select>
-                </div>
-                <div id="rotation-plan" class="mt-6">
-                    <p class="text-center text-gray-500">Select a crop goal to see the recommended rotation plan.</p>
-                </div>
-            </div>
-        </section>
 
-        <section id="reference" class="scroll-mt-24">
-            <h2 class="text-3xl font-bold mb-2 text-center">Quick Reference</h2>
-            <p class="text-center mb-8 max-w-3xl mx-auto text-lg text-gray-600">All the core data in one place. Use the search box to quickly filter the tables for crops, fertilizers, and tier requirements.</p>
-            <div class="card">
-                <input type="text" id="reference-search" placeholder="Search tables..." class="w-full p-2 border rounded-md mb-6">
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div>
-                        <h3 class="text-xl font-bold mb-4">Crop Influences</h3>
-                        <div class="overflow-x-auto">
-                            <table id="crop-table" class="w-full text-left">
-                                <thead class="border-b-2 accent-border"><tr><th class="p-2">Crop</th><th class="p-2">Influenced By</th><th class="p-2">Influences</th></tr></thead>
-                                <tbody></tbody>
-                            </table>
+            <!-- Strategy Guide -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-[#2F4F4F]">
+                <h3 class="text-xl font-bold text-[#2F4F4F] mb-4">Your Action Plan</h3>
+                
+                <div class="space-y-4">
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#2F4F4F] text-white flex items-center justify-center font-bold">1</div>
+                        <div>
+                            <h4 class="font-bold">Get your LI immediately</h4>
+                            <p class="text-sm text-gray-600">At Level 50 (or before entering Moria), complete the intro quest. Do not delay. This weapon replaces all drops.</p>
                         </div>
                     </div>
-                    <div>
-                        <h3 class="text-xl font-bold mb-4">Fertilizer Effects</h3>
-                        <div class="overflow-x-auto">
-                           <table id="fertilizer-table" class="w-full text-left">
-                               <thead class="border-b-2 accent-border"><tr><th class="p-2">Fertilizer</th><th class="p-2">Primary Effect</th></tr></thead>
-                                <tbody></tbody>
-                            </table>
+
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#2F4F4F] text-white flex items-center justify-center font-bold">2</div>
+                        <div>
+                            <h4 class="font-bold">Keep Crafting for "Word of Craft"</h4>
+                            <p class="text-sm text-gray-600">In the "Craft" slot of your LI, you can slot a crafted Tracery. These provide unique set bonuses (like Critical Rating or Mastery). This is the main link between crafting and LIs.</p>
                         </div>
-                        <h3 class="text-xl font-bold mt-8 mb-4">Tier Thresholds</h3>
-                        <div class="overflow-x-auto">
-                           <table id="tier-table" class="w-full text-left">
-                               <thead class="border-b-2 accent-border"><tr><th class="p-2">Total Influence</th><th class="p-2">Resulting Tier</th></tr></thead>
-                                <tbody></tbody>
-                            </table>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#2F4F4F] text-white flex items-center justify-center font-bold">3</div>
+                        <div>
+                            <h4 class="font-bold">Reforge every 5-10 levels</h4>
+                            <p class="text-sm text-gray-600">Visit a Forge Master (in major hubs like Bree, Rivendell, Thorin's Hall) to "Reforge." This raises the item level and base DPS/Stats of the weapon instantly.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#2F4F4F] text-white flex items-center justify-center font-bold">4</div>
+                        <div>
+                            <h4 class="font-bold">Don't ignore the Reward Track</h4>
+                            <p class="text-sm text-gray-600">Opened via the Menu (Shift+I). Playing the game earns XP for this track, which gives you the Ancient Script and Runes needed to upgrade your Traceries.</p>
                         </div>
                     </div>
                 </div>
@@ -293,320 +302,275 @@
 
     </main>
 
-    <footer class="text-center p-8 mt-16 text-gray-500">
-        <p>Interactive guide based on the Salem farming system. For educational and gameplay purposes.</p>
+    <!-- Footer -->
+    <footer class="bg-[#2C241B] text-[#F5F2E9] py-8 text-center border-t border-[#DAA520]">
+        <div class="container mx-auto px-4">
+            <p class="cinzel font-bold text-lg mb-2">Speak Friend and Enter</p>
+            <p class="text-sm text-gray-400">Created for Free Peoples of Middle-earth. Data pertains to the Post-Gundabad Legendary Item System.</p>
+            <p class="text-xs text-gray-500 mt-4">Not affiliated with Standing Stone Games.</p>
+        </div>
     </footer>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
+    <script>
+        // State Management
+        const state = {
+            currentProf: null,
+            currentPart: null
+        };
 
-    const influenceColors = {
-        Red: '#E57373', Blue: '#64B5F6', Green: '#81C784', Pink: '#F06292'
-    };
-    const influenceMap = { 1: 'Red', 2: 'Blue', 3: 'Green', 4: 'Pink' };
-
-    const db = {
-        crops: {
-            'Ear of Cereal': { influencedBy: [4, 1], influences: 2, tiers: {t1: 'Oats', t2a: 'Rye (Pink > Red)', t2b: 'Barley (Red > Pink)', t3: 'Wheat'} },
-            'Cabbage': { influencedBy: [3, 4], influences: 1, tiers: {t1: 'Green Cabbage', t2a: 'White Cabbage (Pink > Green)', t2b: 'Green Cabbage (Green > Pink)', t3: 'Red Cabbage'} },
-            'Cotton': { influencedBy: [1, 2], influences: 3, tiers: {t1: 'Indian Cotton', t2a: 'Egyptian Cotton (Blue > Red)', t2b: 'Indian Cotton (Red > Blue)', t3: 'Sea Island Cotton'} },
-            'Pumpkin': { influencedBy: [2, 3], influences: 4, tiers: {t1: 'Connecticut Field', t2a: 'Sugar Treat', t2b: 'Harvest Moon', t3: 'Jack-o-Lantern'} },
-            'Corn': { influencedBy: [1, 3], influences: 2, tiers: {t1: 'Yellow Corn', t2a: 'Blue Corn', t2b: 'Indian Corn', t3: 'Glass Gem Corn'} },
-            'Any Potato': { influencedBy: [3, 4], influences: 1, tiers: {t1: 'Common Potato', t2a: 'Sweet Potato', t2b: 'Red Potato', t3: 'Blue Potato'} },
-            'Tobacco': { influencedBy: [1, 2], influences: 3, tiers: {t1: 'Common Tobacco', t2a: 'Virginia Tobacco', t2b: 'Burley Tobacco', t3: 'Perique'} },
-        },
-        fertilizers: {
-            'None': { effect: 'None' },
-            'Hay': { effect: 'Influence (+40%)' },
-            'Clay': { effect: 'Influence' },
-            'Lime': { effect: 'Plenty, Speed' },
-            'Coal': { effect: 'Plenty, Speed' },
-            'Humus': { effect: 'Speed, Plenty, Influence' },
-            'Crown Manure': { effect: 'Speed, Plenty' },
-            'Wood Choppings': { effect: 'Upkeep Reduction' },
-        },
-        tierThresholds: [
-            { range: '0 - 75', tier: 'Tier 1' },
-            { range: '75 - 100', tier: 'Mix of Tier 1 & 2' },
-            { range: '100 - 150', tier: 'Tier 2' },
-            { range: '150 - 195', tier: 'Mix of Tier 2 & 3' },
-            { range: '150+', tier: 'Tier 3 (Wheat specific: 150+)' },
-        ],
-        rotationPlans: {
-            'Cabbage (Red Cabbage)': {
-                goal: 'Red Cabbage', influencedBy: [3, 4], steps: [
-                    { step: 1, crop: 'Cotton / Tobacco', action: 'Builds Green Influence (Bar 3)', details: 'Plant repeatedly, using influence fertilizers like Hay, until Green bar is high (ideally 100).' },
-                    { step: 2, crop: 'Pumpkin', action: 'Builds Pink Influence (Bar 4)', details: 'Switch to Pumpkin to raise the Pink bar to a high level (ideally 100).' },
-                    { step: 3, crop: 'Plant Cabbage', action: 'Harvest Tier 3', details: 'With both Green and Pink influence high (150-195+ total), plant Cabbage. Use Plenty fertilizers like Lime for max yield.' }
-                ]
+        // Data: LI Anatomy Details
+        const anatomyData = {
+            shell: {
+                title: "The Vessel (Base Item)",
+                desc: "This is the sword, staff, or bow itself. In the new system, it is merely a container. It has very low stats until you socket Traceries into it. It grows in power via 'Reforging' at a Forge Master NPC.",
+                acquisition: "Moria Intro Quest / Rivendell Archives",
+                craftable: false,
+                craft_note: "No"
             },
-            'Cotton (Sea Island Cotton)': {
-                goal: 'Sea Island Cotton', influencedBy: [1, 2], steps: [
-                    { step: 1, crop: 'Cabbage / Any Potato', action: 'Builds Red Influence (Bar 1)', details: 'Plant repeatedly to raise the Red bar to a high level.' },
-                    { step: 2, crop: 'Ear of Cereals / Corn', action: 'Builds Blue Influence (Bar 2)', details: 'Switch to Cereals or Corn to raise the Blue bar to a high level.' },
-                    { step: 3, crop: 'Plant Cotton', action: 'Harvest Tier 3', details: 'With Red and Blue influence high, plant Cotton for your Tier 3 reward.' }
-                ]
+            heraldry: {
+                title: "Heraldry Tracery (Stats)",
+                desc: "The primary stat booster. Provides huge chunks of Might, Agility, Will, Vitality, or Physical/Tactical Mastery. You can only have one Heraldry per item.",
+                acquisition: "Reward Track / Instances / Barter",
+                craftable: false,
+                craft_note: "No"
             },
-            'Ear of Cereal (Wheat)': {
-                goal: 'Wheat', influencedBy: [4, 1], steps: [
-                    { step: 1, crop: 'Pumpkin', action: 'Builds Pink Influence (Bar 4)', details: 'Plant Pumpkin repeatedly with influence fertilizers to max out the Pink bar.' },
-                    { step: 2, crop: 'Cabbage / Any Potato', action: 'Builds Red Influence (Bar 1)', details: 'Switch to Cabbage or Potatoes to max out the Red bar.' },
-                    { step: 3, crop: 'Plant Ear of Cereal', action: 'Harvest Tier 3', details: 'With Pink and Red influence combining to 150+, plant Cereal. Wheat is guaranteed.' }
-                ]
-            }
-        }
-    };
-
-    let chartInstance = null;
-    let simState = { Red: 0, Blue: 0, Green: 0, Pink: 0 };
-
-    function setup() {
-        populateSelectors();
-        populateTables();
-        initChart();
-        setupEventListeners();
-        updateSimUI();
-    }
-
-    function populateSelectors() {
-        const cropSelect = document.getElementById('sim-crop');
-        const fertilizerSelect = document.getElementById('sim-fertilizer');
-        const rotationSelect = document.getElementById('rotation-goal');
-
-        Object.keys(db.crops).forEach(crop => {
-            cropSelect.innerHTML += `<option value="${crop}">${crop}</option>`;
-        });
-        Object.keys(db.fertilizers).forEach(fert => {
-            fertilizerSelect.innerHTML += `<option value="${fert}">${fert}</option>`;
-        });
-        Object.keys(db.rotationPlans).forEach(plan => {
-            rotationSelect.innerHTML += `<option value="${plan}">${plan}</option>`;
-        });
-        rotationSelect.insertAdjacentHTML('afterbegin', '<option value="" selected disabled>Select a Tier 3 Goal...</option>');
-    }
-
-    function populateTables() {
-        const cropBody = document.querySelector('#crop-table tbody');
-        for (const crop in db.crops) {
-            const data = db.crops[crop];
-            const influencedBy = data.influencedBy.map(i => `<span style="color:${influenceColors[influenceMap[i]]};" class="font-bold">${influenceMap[i]}</span>`).join(' & ');
-            const influences = `<span style="color:${influenceColors[influenceMap[data.influences]]};" class="font-bold">${influenceMap[data.influences]}</span>`;
-            cropBody.innerHTML += `<tr class="border-b border-gray-200" data-searchable="${crop.toLowerCase()}">
-                <td class="p-2 font-semibold">${crop}</td><td class="p-2">${influencedBy}</td><td class="p-2">${influences}</td>
-            </tr>`;
-        }
-
-        const fertBody = document.querySelector('#fertilizer-table tbody');
-        for (const fert in db.fertilizers) {
-            fertBody.innerHTML += `<tr class="border-b border-gray-200" data-searchable="${fert.toLowerCase()}">
-                <td class="p-2 font-semibold">${fert}</td><td class="p-2">${db.fertilizers[fert].effect}</td>
-            </tr>`;
-        }
-
-        const tierBody = document.querySelector('#tier-table tbody');
-        db.tierThresholds.forEach(t => {
-            tierBody.innerHTML += `<tr class="border-b border-gray-200" data-searchable="${t.tier.toLowerCase()} ${t.range}">
-                <td class="p-2 font-semibold">${t.range}</td><td class="p-2">${t.tier}</td>
-            </tr>`;
-        });
-    }
-
-    function initChart() {
-        const ctx = document.getElementById('influenceChart').getContext('2d');
-        chartInstance = new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: ['Red', 'Blue', 'Green', 'Pink'],
-                datasets: [{
-                    label: 'Influence Levels',
-                    data: [0, 0, 0, 0],
-                    backgroundColor: 'rgba(198, 123, 92, 0.2)',
-                    borderColor: 'rgba(198, 123, 92, 1)',
-                    borderWidth: 2,
-                    pointBackgroundColor: 'rgba(198, 123, 92, 1)'
-                }]
+            mastery: {
+                title: "Word of Power / Mastery",
+                desc: "These provide specific bonuses to your skills (e.g., '+20% Light Damage', '-5s Cooldown on Shout'). Essential for class builds. 'Word of Power' affects general combat stats (AOE damage, Range).",
+                acquisition: "Reward Track / Instances / Barter",
+                craftable: false,
+                craft_note: "No"
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        angleLines: { color: 'rgba(78, 68, 58, 0.2)' },
-                        grid: { color: 'rgba(78, 68, 58, 0.2)' },
-                        pointLabels: {
-                            font: { size: 14, weight: 'bold' },
-                            color: ['#E57373', '#64B5F6', '#81C784', '#F06292']
-                        },
-                        ticks: {
-                            color: 'rgba(78, 68, 58, 0.7)',
-                            backdropColor: '#FDFBF5',
-                            stepSize: 25,
-                        },
-                        suggestedMin: 0,
-                        suggestedMax: 100
-                    }
-                },
-                plugins: {
-                    legend: { display: false }
-                }
+            craft: {
+                title: "Word of Craft (The Crafting Slot)",
+                desc: "The ONE slot dedicated to crafters! These traceries provide stat buffs (Crit Rating, Healing) and often have 'Set Bonuses' if you equip multiple of the same type.",
+                acquisition: "CRAFTING (Recipes) / Barter",
+                craftable: true,
+                craft_note: "YES! Essential for min-maxing."
+            },
+            reforge: {
+                title: "Reforging",
+                desc: "The process of updating the item's level to match yours. You must visit a Forge Master NPC. It costs standard game gold. It unlocks more Tracery slots and increases base DPS.",
+                acquisition: "NPC Interaction",
+                craftable: false,
+                craft_note: "No (Costs Gold)"
             }
+        };
+
+        // Data: Profession Details
+        const profData = {
+            scholar: {
+                title: "Scholar",
+                desc: "Masters of ancient lore. Very useful for the LI system.",
+                contributions: [
+                    { icon: "📜", text: "Crafts 'Word of Craft' Traceries (Class/Stat bonuses).", type: "LI Support" },
+                    { icon: "🧪", text: "Crafts Potions & Battle Scrolls (Essential buffs).", type: "Consumables" },
+                    { icon: "🔮", text: "Pocket Items (Standard gear slot).", type: "Gear" }
+                ],
+                chartData: [20, 50, 30] // [LI Direct, Other Gear, Consumables]
+            },
+            weaponsmith: {
+                title: "Weaponsmith",
+                desc: "Forgers of steel. Ironically, less critical for the MAIN weapon now, but vital for off-hands.",
+                contributions: [
+                    { icon: "⚔️", text: "Crafts Off-Hand Weapons (Crucial stat sticks).", type: "Gear" },
+                    { icon: "🔨", text: "Crafts 'Word of Craft' Traceries (Physical Mastery sets).", type: "LI Support" },
+                    { icon: "❌", text: "Cannot craft Main-Hand Legendary Weapons.", type: "Limitation" }
+                ],
+                chartData: [15, 60, 25]
+            },
+            woodworker: {
+                title: "Woodworker",
+                desc: "Shapers of wood. Similar to Weaponsmiths, they support via off-hands and specific traceries.",
+                contributions: [
+                    { icon: "🏹", text: "Crafts Clubs/Hammers (Off-hands).", type: "Gear" },
+                    { icon: "🔨", text: "Crafts 'Word of Craft' Traceries (Critical Rating sets).", type: "LI Support" },
+                    { icon: "🎻", text: "Instruments for Minstrels.", type: "Gear" }
+                ],
+                chartData: [15, 60, 25]
+            },
+            jeweller: {
+                title: "Jeweller",
+                desc: "Creators of fine adornments. Extremely high value for all players.",
+                contributions: [
+                    { icon: "💍", text: "Crafts Rings, Bracelets, Necklaces, Earrings.", type: "Gear" },
+                    { icon: "✨", text: "Crafts Hope Tokens (Vital raid consumable).", type: "Consumables" },
+                    { icon: "🔨", text: "Crafts 'Word of Craft' Traceries (Tactical Mitigation sets).", type: "LI Support" }
+                ],
+                chartData: [10, 80, 10]
+            },
+            armourer: {
+                title: "Metalsmith (Armourer)",
+                desc: "Defenders of the free peoples. Focuses on protection rather than the weapon.",
+                contributions: [
+                    { icon: "🛡️", text: "Crafts Heavy Shields (Standard gear).", type: "Gear" },
+                    { icon: "👕", text: "Crafts Heavy Armour.", type: "Gear" },
+                    { icon: "🔨", text: "Crafts 'Word of Craft' Traceries (Physical Mitigation sets).", type: "LI Support" }
+                ],
+                chartData: [10, 90, 0]
+            },
+            tailor: {
+                title: "Tailor",
+                desc: "Weavers of cloth and leather. Essential for Light/Medium armor classes.",
+                contributions: [
+                    { icon: "🧥", text: "Crafts Light & Medium Armour.", type: "Gear" },
+                    { icon: "👜", text: "Crafts Cloaks.", type: "Gear" },
+                    { icon: "🔨", text: "Crafts 'Word of Craft' Traceries (Healing sets).", type: "LI Support" }
+                ],
+                chartData: [10, 90, 0]
+            }
+        };
+
+        // Initialization
+        let powerChart = null;
+        let craftingChart = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initPowerChart();
+            // Default selection for anatomy
+            selectPart('shell');
+            // Default selection for profession
+            filterProfession('scholar');
         });
-    }
 
-    function updateSimUI() {
-        const selectedCropName = document.getElementById('sim-crop').value;
-        const cropData = db.crops[selectedCropName];
-        
-        const infoBox = document.getElementById('sim-crop-info');
-        const influencedBy = cropData.influencedBy.map(i => `<span style="color:${influenceColors[influenceMap[i]]}; font-weight: bold;">${influenceMap[i]}</span>`).join(' and ');
-        const influences = `<span style="color:${influenceColors[influenceMap[cropData.influences]]}; font-weight: bold;">${influenceMap[cropData.influences]}</span>`;
-        infoBox.innerHTML = `<strong>${selectedCropName}</strong> is influenced by ${influencedBy}. Upon harvest, it will increase ${influences} influence.`;
-        
-        chartInstance.data.datasets[0].data = Object.values(simState);
-        chartInstance.update('none');
-
-        document.getElementById('red-value').textContent = Math.round(simState.Red);
-        document.getElementById('blue-value').textContent = Math.round(simState.Blue);
-        document.getElementById('green-value').textContent = Math.round(simState.Green);
-        document.getElementById('pink-value').textContent = Math.round(simState.Pink);
-
-        document.getElementById('red-bar').style.width = `${simState.Red}%`;
-        document.getElementById('blue-bar').style.width = `${simState.Blue}%`;
-        document.getElementById('green-bar').style.width = `${simState.Green}%`;
-        document.getElementById('pink-bar').style.width = `${simState.Pink}%`;
-
-        const totalInfluence = simState[influenceMap[cropData.influencedBy[0]]] + simState[influenceMap[cropData.influencedBy[1]]];
-        let tier = 'Tier 1';
-        if (totalInfluence >= 150) tier = 'Tier 2 & 3 Mix (or T3 Wheat)';
-        else if (totalInfluence >= 100) tier = 'Tier 2';
-        else if (totalInfluence >= 75) tier = 'Tier 1 & 2 Mix';
-
-        document.getElementById('predicted-crop-name').textContent = selectedCropName;
-        document.getElementById('predicted-tier').textContent = tier;
-        document.getElementById('predicted-influence-total').textContent = Math.round(totalInfluence);
-    }
-    
-    function runSimulation() {
-        const selectedCropName = document.getElementById('sim-crop').value;
-        const cropData = db.crops[selectedCropName];
-        const hasThreeField = document.getElementById('sim-skill-three-field').checked;
-        const fertilizer = document.getElementById('sim-fertilizer').value;
-
-        let influenceGain = 50;
-        if(fertilizer === 'Hay' || fertilizer === 'Clay' || fertilizer === 'Humus') {
-            influenceGain = 100;
+        // Functions
+        function navTo(id) {
+            const el = document.getElementById(id);
+            if(el) el.scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('mobile-menu').classList.add('hidden');
         }
 
-        const multiplier = hasThreeField ? 5 : 3;
-        const gain = influenceGain * (multiplier / 10);
-        const barToIncrease = influenceMap[cropData.influences];
-
-        Object.keys(simState).forEach(key => {
-            if (key === barToIncrease) {
-                simState[key] += gain;
-            } else {
-                simState[key] -= 5;
-            }
-            if (simState[key] < 0) simState[key] = 0;
-            if (simState[key] > 100) simState[key] = 100;
-        });
-
-        updateSimUI();
-    }
-    
-    function resetSimulation() {
-        simState = { Red: 0, Blue: 0, Green: 0, Pink: 0 };
-        updateSimUI();
-    }
-
-    function updateRotationPlan() {
-        const planName = document.getElementById('rotation-goal').value;
-        const planData = db.rotationPlans[planName];
-        const planContainer = document.getElementById('rotation-plan');
-
-        if (!planData) {
-            planContainer.innerHTML = '<p class="text-center text-gray-500">Select a crop goal to see the recommended rotation plan.</p>';
-            return;
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
         }
 
-        let html = '<div class="space-y-6">';
-        planData.steps.forEach((step, index) => {
-            html += `
-                <div class="flex items-start space-x-4">
-                    <div class="flex-shrink-0 h-12 w-12 rounded-full accent-bg flex items-center justify-center text-white font-bold text-xl">${step.step}</div>
-                    <div class="flex-1">
-                        <h4 class="font-bold text-lg">${step.action}</h4>
-                        <p class="text-gray-600"><strong class="text-gray-800">Plant:</strong> ${step.crop}</p>
-                        <p class="text-sm text-gray-500 mt-1">${step.details}</p>
+        function selectPart(partId) {
+            state.currentPart = partId;
+            const data = anatomyData[partId];
+            
+            // Update UI Text
+            document.getElementById('detail-title').innerText = data.title;
+            document.getElementById('detail-desc').innerText = data.desc;
+            document.getElementById('meta-acq').innerText = data.acquisition;
+            
+            const craftEl = document.getElementById('meta-craft');
+            craftEl.innerText = data.craft_note;
+            craftEl.className = data.craftable 
+                ? "text-sm font-bold text-green-700 bg-green-100 px-2 py-1 rounded" 
+                : "text-sm font-bold text-red-700 bg-red-100 px-2 py-1 rounded";
+
+            document.getElementById('detail-meta').classList.remove('hidden');
+
+            // Highlight Active Slot in Schematic (Simple visual feedback)
+            // In a full app, we would manage class lists for active states
+        }
+
+        function filterProfession(profId) {
+            state.currentProf = profId;
+            const data = profData[profId];
+
+            // Update Text
+            document.getElementById('prof-title').innerText = data.title;
+            document.getElementById('prof-desc').innerText = data.desc;
+
+            // Generate List
+            const listContainer = document.getElementById('prof-contributions');
+            listContainer.innerHTML = '';
+            listContainer.classList.remove('opacity-50');
+
+            data.contributions.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "flex items-start gap-3 p-3 bg-white border border-gray-200 rounded shadow-sm hover:shadow-md transition";
+                div.innerHTML = `
+                    <span class="text-xl">${item.icon}</span>
+                    <div>
+                        <h4 class="font-bold text-sm text-[#2F4F4F]">${item.type}</h4>
+                        <p class="text-sm text-gray-600">${item.text}</p>
                     </div>
-                </div>
-            `;
-            if (index < planData.steps.length - 1) {
-                html += '<div class="pl-5"><div class="h-6 w-px bg-gray-300 ml-5"></div></div>';
-            }
-        });
-        html += '</div>';
+                `;
+                listContainer.appendChild(div);
+            });
 
-        planContainer.innerHTML = html;
-    }
-
-    function handleSearch() {
-        const query = document.getElementById('reference-search').value.toLowerCase();
-        document.querySelectorAll('#reference [data-searchable]').forEach(row => {
-            const content = row.getAttribute('data-searchable');
-            if (content.includes(query)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-
-    function setupEventListeners() {
-        document.querySelectorAll('.accordion-header').forEach(header => {
-            header.addEventListener('click', () => {
-                const content = header.nextElementSibling;
-                const icon = header.querySelector('span:last-child');
-                if (content.style.maxHeight) {
-                    content.style.maxHeight = null;
-                    icon.style.transform = 'rotate(0deg)';
+            // Update Chart
+            updateCraftingChart(data.chartData);
+            
+            // Highlight button
+            document.querySelectorAll('.prof-btn').forEach(btn => {
+                if(btn.innerText.toLowerCase().includes(data.title.split(' ')[0].toLowerCase())) {
+                    btn.classList.add('bg-[#DAA520]', 'text-white');
+                    btn.classList.remove('bg-[#1a2e2e]');
                 } else {
-                    document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
-                    document.querySelectorAll('.accordion-header span:last-child').forEach(i => i.style.transform = 'rotate(0deg)');
-                    content.style.maxHeight = content.scrollHeight + 'px';
-                    icon.style.transform = 'rotate(180deg)';
+                    btn.classList.remove('bg-[#DAA520]', 'text-white');
+                    btn.classList.add('bg-[#1a2e2e]');
                 }
             });
-        });
+        }
 
-        document.getElementById('sim-crop').addEventListener('change', updateSimUI);
-        document.getElementById('sim-harvest-btn').addEventListener('click', runSimulation);
-        document.getElementById('sim-reset-btn').addEventListener('click', resetSimulation);
-        document.getElementById('rotation-goal').addEventListener('change', updateRotationPlan);
-        document.getElementById('reference-search').addEventListener('input', handleSearch);
-
-        const navLinks = document.querySelectorAll('.nav-link');
-        const sections = document.querySelectorAll('section');
-        window.addEventListener('scroll', () => {
-            let current = '';
-            sections.forEach(section => {
-                const sectionTop = section.offsetTop;
-                if (pageYOffset >= sectionTop - 120) {
-                    current = section.getAttribute('id');
+        // Charts
+        function initPowerChart() {
+            const ctx = document.getElementById('powerCurveChart').getContext('2d');
+            powerChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lvl 50', 'Lvl 60', 'Lvl 70', 'Lvl 80', 'Lvl 90', 'Lvl 100+'],
+                    datasets: [{
+                        label: 'Legendary Item (Reforged)',
+                        data: [100, 250, 450, 700, 1000, 1500],
+                        borderColor: '#DAA520',
+                        backgroundColor: 'rgba(218, 165, 32, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.1,
+                        fill: true
+                    }, {
+                        label: 'Standard Crafted Weapon',
+                        data: [90, 180, 280, 380, 480, 500],
+                        borderColor: '#8B4513',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: { title: { display: true, text: 'Weapon DPS / Power' } }
+                    }
                 }
             });
-            navLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href').includes(current)) {
-                    link.classList.add('active');
+        }
+
+        function updateCraftingChart(dataPoints) {
+            const ctx = document.getElementById('craftingChart').getContext('2d');
+            
+            if (craftingChart) {
+                craftingChart.destroy();
+            }
+
+            craftingChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Direct LI Support (Traceries)', 'Other Gear (Armor/Jewels)', 'Consumables/Misc'],
+                    datasets: [{
+                        data: dataPoints,
+                        backgroundColor: ['#DAA520', '#2F4F4F', '#8B4513'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+                    }
                 }
             });
-        });
-    }
+        }
 
-    setup();
-});
-</script>
-
+    </script>
 </body>
 </html>
