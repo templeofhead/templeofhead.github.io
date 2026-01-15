@@ -1,1 +1,1 @@
-# EBALI Methodology Guide
+# LOTRO Legendary Items and Crafting
